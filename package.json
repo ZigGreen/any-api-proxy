@@ -1,0 +1,31 @@
+{
+  "name": "any-api-proxy",
+  "version": "1.0.0",
+  "description": "## example",
+  "main": "proxy.js",
+  "bin": {
+    "aproxy": "proxy.js"
+  },
+  "dependencies": {
+    "http-proxy": "^1.16.2",
+    "ramda": "^0.25.0",
+    "yargs": "^10.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ZigGreen/any-api-proxy.git"
+  },
+  "keywords": [
+    "proxy",
+    "api",
+    "middleware"
+  ],
+  "author": "Zig Green <krisstal.mail@gmail.com>",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ZigGreen/any-api-proxy/issues"
+  },
+  "homepage": "https://github.com/ZigGreen/any-api-proxy#readme"
+}
