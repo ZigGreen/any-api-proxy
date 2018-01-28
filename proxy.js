@@ -7,9 +7,51 @@ const httpProxy = require('http-proxy');
 const fs = require('fs');
 const path = require('path');
 const proxy = httpProxy.createProxyServer({});
-const { PORT = 5050, mockFile = 'mock.json', api, help } = require('yargs').argv;
 const noop = () => undefined;
 let mockData;
+const vorpal = require('vorpal')();
+
+vorpal
+    .command('start <api>', 'starts the API mocking proxy server')
+    .option('--mockFile <mock.json>', 'specify json mock file')
+    .option('--port <number>', 'specify port for proxy server')
+    .types({
+        string: ['api', 'm', 'mockFile']
+    })
+    .action(function(args, callback) {
+        const { port = 5050, mockFile = 'mock.json' } = args.options;
+        const { api } = args;
+        try {
+            mockData = JSON.parse(fs.readFileSync(mockFile));
+        } catch (e) {
+            exitWithError(`${mockFile} not found`)
+        }
+
+        fs.watchFile(mockFile, { encoding: 'buffer' }, noop).on('change', () => {
+            try {
+                mockData = JSON.parse(fs.readFileSync(mockFile));
+            } catch (e) {
+                console.error('cant parse mock file', e);
+            }
+        });
+
+
+        const server = http.createServer((req, res) => {
+            mock(req, res, () => {
+                proxy.web(req, res, {
+                    agent: https.globalAgent,
+                    headers: { host: url.parse(api).host },
+                    target: api
+                })
+            });
+        });
+
+        console.log(`listening on port ${port}.\n API (${api}).\n Mock data (${path.resolve(mockFile)})`);
+        server.listen(port);
+    });
+
+vorpal
+    .parse(process.argv);
 
 function exitWithError(msg) {
     console.log(`error: ${msg}`);
@@ -47,40 +89,3 @@ function mock(request, response, next) {
 
     console.log(`info: ${request.url} has been proxied`);
 }
-
-if (help) {
-    console.log('runs api proxy server');
-    console.log('  --api=https://example.com/api (required)');
-    console.log('  --mockFile=./path/to/mock/data (optional, defaults to ./mock.json)');
-}
-
-if (!api) {
-    exitWithError(`specify target API with aproxy --api=example.com/api`)
-}
-
-try {
-    mockData = JSON.parse(fs.readFileSync(mockFile));
-} catch (e) {
-    exitWithError(`${mockFile} not found`)
-}
-
-fs.watchFile(mockFile, { encoding: 'buffer' }, noop).on('change', () => {
-    try {
-        mockData = JSON.parse(fs.readFileSync(mockFile));
-    } catch (e) {
-        console.error('cant parse mock file', e);
-    }
-});
-
-const server = http.createServer((req, res) => {
-    mock(req, res, () => {
-        proxy.web(req, res, {
-            agent: https.globalAgent,
-            headers: { host: url.parse(api).host },
-            target: api
-        })
-    });
-});
-
-console.log(`listening on port ${PORT}.\n API (${api}).\n Mock data (${path.resolve(mockFile)})`);
-server.listen(PORT);
