@@ -9,19 +9,33 @@ const path = require('path');
 const proxy = httpProxy.createProxyServer({});
 const noop = () => undefined;
 let mockData;
+let responseMode;
 const vorpal = require('vorpal')();
+
+const httpModes = {
+  error: {
+    statusCode: 202,
+    status: 'Error'
+  },
+  success: {
+    statucCode: 200,
+    status: 'Ok'
+  }
+};
 
 vorpal
     .command('start <api>', 'starts the API mocking proxy server')
+    .option('--mode <string>', 'specify mode for proxy server (success or error, default is success)')
     .option('--mockFile <mock.json>', 'specify json mock file')
     .option('--port <number>', 'specify port for proxy server')
     .types({
-        string: ['api', 'm', 'mockFile']
+        string: ['api', 'm', 'mockFile', 'mode']
     })
     .action(function(args, callback) {
-        const { port = 5050, mockFile = 'mock.json' } = args.options;
+        const { port = 5050, mockFile = 'mock.json', mode = 'success' } = args.options;
         const { api } = args;
         try {
+            responseMode = mode;
             mockData = JSON.parse(fs.readFileSync(mockFile));
         } catch (e) {
             exitWithError(`${mockFile} not found`)
@@ -46,7 +60,7 @@ vorpal
             });
         });
 
-        console.log(`listening on port ${port}.\n API (${api}).\n Mock data (${path.resolve(mockFile)})`);
+        console.log(`listening on port ${port}.\n API (${api}).\n Mock data (${path.resolve(mockFile)}) \n Mode ${responseMode}`);
         server.listen(port);
     });
 
@@ -78,12 +92,13 @@ function mock(request, response, next) {
     response.setHeader('Content-Type', 'application/json');
 
     if (request.method === 'OPTIONS') {
-        response.writeHead(200);
+        response.writeHead(httpModes[responseMode].statusCode);
         response.end();
     } else {
+        response.writeHead(httpModes[responseMode].statusCode);
         response.end(JSON.stringify({
             payload: result,
-            status: 'Ok'
+            status: httpModes[responseMode].status
         }))
     }
 
