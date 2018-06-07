@@ -6,6 +6,7 @@ whereas other methods still requested from real API
     aproxy
       --api=https://example.com/api (required)
       --mockFile=./path/to/mock/data (optional, defaults to ./mock.json)
+      --mode=error (optional, defaults to success)
 
 ## example
 
@@ -23,3 +24,6 @@ to mock https://example.com/api/keyA/keyB use mock file:
   }
 }
 ```
+
+## modes
+Also you can choose mode of HTTP response: success or error. If you choose `error` mode HTTP response status code will be `202`
