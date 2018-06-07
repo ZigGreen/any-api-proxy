@@ -5,7 +5,9 @@ whereas other methods still requested from real API
 ## example
 
 ```
-aproxy https://example.com/api --mockFile ./mock.json
+aproxy https://example.com/api \
+  --mockFile ./mock.json \
+  --mode=error (optional, defaults to success)              
 ```
 
 to mock https://example.com/api/keyA/keyB use mock file:
@@ -18,3 +20,6 @@ to mock https://example.com/api/keyA/keyB use mock file:
   }
 }
 ```
+
+## modes
+Also you can choose mode of HTTP response: success or error. If you choose `error` mode HTTP response status code will be `202`
