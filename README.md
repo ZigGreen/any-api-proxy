@@ -5,7 +5,7 @@ whereas other methods still requested from real API
 ## example
 
 ```
-aproxy https://example.com/api \
+aproxy start https://example.com/api \
   --mockFile ./mock.json \
   --mode=error (optional, defaults to success)              
 ```
