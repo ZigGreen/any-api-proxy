@@ -36,6 +36,8 @@ vorpal
     .action(function(args, callback) {
         const { port = 5050, mockFile = 'mock.json', mockScript, mode = 'success' } = args.options;
         const { api } = args;
+        let mockFileMessege = '';
+
         responseMode = mode;
         try {
             mockData = JSON.parse(fs.readFileSync(mockFile));
@@ -44,7 +46,9 @@ vorpal
         }
         if (mockScript) {
             try {
-                mockFn = require(mockScript);
+                const mockPath = path.resolve(process.cwd(), mockScript);
+                mockFn = require(mockPath);
+                mockFileMessege = `\n Mock file loaded ${mockPath}`;
             } catch (e) {
                 exitWithError(`${mockScript} not found`)
             }
@@ -70,7 +74,7 @@ vorpal
             });
         });
 
-        console.log(`listening on port ${port}.\n API (${api}).\n Mock data (${path.resolve(mockFile)}) \n Mode ${responseMode}`);
+        console.log(`listening on port ${port}.\n API (${api}).\n Mock data (${path.resolve(mockFile)}) \n Mode ${responseMode} ${mockFileMessege}`);
         server.listen(port);
     });
 
