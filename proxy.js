@@ -9,6 +9,7 @@ const path = require('path');
 const proxy = httpProxy.createProxyServer({});
 const noop = () => undefined;
 let mockData;
+let mockFn = (url, params, mock) => mock;
 let responseMode;
 const vorpal = require('vorpal')();
 
@@ -18,7 +19,7 @@ const httpModes = {
     status: 'Error'
   },
   success: {
-    statucCode: 200,
+    statusCode: 200,
     status: 'Ok'
   }
 };
@@ -27,19 +28,28 @@ vorpal
     .command('start <api>', 'starts the API mocking proxy server')
     .option('--mode <string>', 'specify mode for proxy server (success or error, default is success)')
     .option('--mockFile <mock.json>', 'specify json mock file')
+    .option('--mockScript <mock.js>', 'specify postprocessing file. receives req params')
     .option('--port <number>', 'specify port for proxy server')
     .types({
         string: ['api', 'm', 'mockFile', 'mode']
     })
     .action(function(args, callback) {
-        const { port = 5050, mockFile = 'mock.json', mode = 'success' } = args.options;
+        const { port = 5050, mockFile = 'mock.json', mockScript, mode = 'success' } = args.options;
         const { api } = args;
+        responseMode = mode;
         try {
-            responseMode = mode;
             mockData = JSON.parse(fs.readFileSync(mockFile));
         } catch (e) {
             exitWithError(`${mockFile} not found`)
         }
+        if (mockScript) {
+            try {
+                mockFn = require(mockScript);
+            } catch (e) {
+                exitWithError(`${mockScript} not found`)
+            }
+        }
+
 
         fs.watchFile(mockFile, { encoding: 'buffer' }, noop).on('change', () => {
             try {
@@ -77,6 +87,19 @@ function methodPath(url) {
     return url.split('?')[0].split('/').filter(x => x);
 }
 
+function getReqParams(request) {
+    return new Promise(resolve => {
+        if (request.method === 'POST') {
+            let body = '';
+
+            request.on('data', data => body += data);
+            request.on('end', () => resolve(JSON.parse(body)));
+        } else {
+            resolve('');
+        }
+    });
+}
+
 function mock(request, response, next) {
     const result = ramda.path(methodPath(request.url), mockData);
 
@@ -95,11 +118,13 @@ function mock(request, response, next) {
         response.writeHead(httpModes[responseMode].statusCode);
         response.end();
     } else {
-        response.writeHead(httpModes[responseMode].statusCode);
-        response.end(JSON.stringify({
-            payload: result,
-            status: httpModes[responseMode].status
-        }))
+        getReqParams(request).then(params => {
+            response.writeHead(httpModes[responseMode].statusCode);
+            response.end(JSON.stringify({
+                payload: mockFn(request.url, params, result),
+                status: httpModes[responseMode].status
+            }))
+        });
     }
 
     console.log(`info: ${request.url} has been proxied`);
