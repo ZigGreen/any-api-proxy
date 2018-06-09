@@ -23,3 +23,12 @@ to mock https://example.com/api/keyA/keyB use mock file:
 
 ## modes
 Also you can choose mode of HTTP response: success or error. If you choose `error` mode HTTP response status code will be `202`
+
+## mockScript.js
+```js
+module.exports = (url, params, mock) => {
+    params; // POST parameters
+    mock; // subset of mock.json related to url
+    return mock;
+};
+```
