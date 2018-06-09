@@ -7,6 +7,7 @@ whereas other methods still requested from real API
 ```
 aproxy start https://example.com/api \
   --mockFile ./mock.json \
+  --mockScript ./mockScript.js \
   --mode=error (optional, defaults to success)              
 ```
 
