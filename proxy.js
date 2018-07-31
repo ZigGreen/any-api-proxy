@@ -40,9 +40,16 @@ vorpal
 
         responseMode = mode;
         try {
-            mockData = JSON.parse(fs.readFileSync(mockFile));
+            let fileContent;
+            try {
+                fileContent = fs.readFileSync(mockFile)
+            } catch (e) {
+                exitWithError(`${mockFile} not found`)
+            }
+
+            mockData = JSON.parse(fileContent);
         } catch (e) {
-            exitWithError(`${mockFile} not found`)
+            exitWithError(`${mockFile}: can not parse`)
         }
         if (mockScript) {
             try {
