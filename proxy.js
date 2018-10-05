@@ -104,9 +104,15 @@ function getReqParams(request) {
             let body = '';
 
             request.on('data', data => body += data);
-            request.on('end', () => resolve(JSON.parse(body)));
+            request.on('end', () => {
+                try {
+                    resolve(JSON.parse(body));
+                } catch (e) {
+                    resolve({});
+                }
+            });
         } else {
-            resolve('');
+            resolve({});
         }
     });
 }
